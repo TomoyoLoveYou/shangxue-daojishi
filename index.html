@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f5f8f6" />
+    <meta name="description" content="简洁的上学倒计时，显示距离北京时间周日 18:35 的剩余时间。" />
+    <title>上学倒计时</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="timer-page" aria-labelledby="page-title">
+        <header class="topbar">
+          <div class="brand-mark" aria-hidden="true">计</div>
+          <div class="brand-copy">
+            <p class="eyebrow">TIME TO GO</p>
+            <h1 id="page-title">上学倒计时</h1>
+          </div>
+          <button class="icon-button" id="reset-button" type="button" aria-label="恢复默认目标" title="恢复默认目标">
+            <span aria-hidden="true">↺</span>
+          </button>
+        </header>
+
+        <section class="hero-panel" aria-live="polite">
+          <div class="status-row">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="status-label">距离下个周日</span>
+          </div>
+          <div class="countdown" id="countdown" aria-label="剩余时间">
+            <span id="days" class="countdown-value">00</span>
+            <span class="countdown-unit">天</span>
+            <span class="countdown-value" id="hours">00</span>
+            <span class="countdown-unit">时</span>
+            <span class="countdown-value" id="minutes">00</span>
+            <span class="countdown-unit">分</span>
+            <span class="countdown-value" id="seconds">00</span>
+            <span class="countdown-unit">秒</span>
+          </div>
+          <p class="target-caption" id="target-caption">目标：周日下午 6:35</p>
+        </section>
+
+        <section class="info-grid" aria-label="目标信息">
+          <article class="info-item">
+            <span class="info-label">目标日期</span>
+            <strong id="target-date">--月--日 周日</strong>
+          </article>
+          <article class="info-item">
+            <span class="info-label">目标时间</span>
+            <strong id="target-time">18:35</strong>
+          </article>
+        </section>
+
+        <button class="customize-button" id="customize-button" type="button">
+          <span class="button-icon" aria-hidden="true">＋</span>
+          <span>自定义目标时间</span>
+          <span class="button-arrow" aria-hidden="true">→</span>
+        </button>
+
+        <footer class="footer-note">
+          <span class="footer-line" aria-hidden="true"></span>
+          <span>北京时间 · 精确到秒</span>
+          <span class="footer-line" aria-hidden="true"></span>
+        </footer>
+      </section>
+    </main>
+
+    <dialog class="custom-dialog" id="custom-dialog" aria-labelledby="dialog-title">
+      <form class="dialog-card" id="custom-form" method="dialog">
+        <div class="dialog-handle" aria-hidden="true"></div>
+        <div class="dialog-heading">
+          <div>
+            <p class="eyebrow">SET YOUR MOMENT</p>
+            <h2 id="dialog-title">自定义目标时间</h2>
+          </div>
+          <button class="close-button" id="close-dialog" type="button" aria-label="关闭">×</button>
+        </div>
+        <p class="dialog-description">选择一个具体日期和时间，倒计时会立即更新。</p>
+        <div class="form-fields">
+          <label class="field-label" for="custom-date">日期</label>
+          <input class="field-input" id="custom-date" name="custom-date" type="date" required />
+          <label class="field-label" for="custom-time">时间</label>
+          <input class="field-input" id="custom-time" name="custom-time" type="time" required />
+        </div>
+        <button class="save-button" type="submit">开始倒计时</button>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
