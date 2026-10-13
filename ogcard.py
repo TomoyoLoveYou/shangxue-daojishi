@@ -58,7 +58,7 @@ GLYPH_SPEC = {
     ROW_SIZE: "0123456789",
     HERO_UNIT_SIZE: "天时分秒",
     TITLE_SIZE: "上学倒计时",
-    LINE_SIZE: "0123456789:目标月日周",
+    LINE_SIZE: "0123456789:目标月日周一二三四五六",
     ROW_UNIT_SIZE: "时分秒",
     EYEBROW_SIZE: "TIMEOG",
 }

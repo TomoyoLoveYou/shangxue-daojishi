@@ -9,6 +9,7 @@
 """
 
 import base64
+import hashlib
 import json
 import os
 import shutil
@@ -59,13 +60,28 @@ def build_glyphs_js():
     return path, raw_len, packed_len
 
 
+def asset_stamp():
+    """静态资源的内容指纹，用来给 URL 加版本号。"""
+    digest = hashlib.sha1()
+    for name in STATIC_FILES:
+        with open(os.path.join(ROOT, name), "rb") as fh:
+            digest.update(fh.read())
+    return digest.hexdigest()[:8]
+
+
 def build_page_js():
     with open(os.path.join(ROOT, "page.html"), encoding="utf-8") as fh:
         page = fh.read()
+    # 关键：给 styles.css / app.js 带上内容版本号。
+    # HTML 是 no-store（每次都新），若资源 URL 不变，浏览器/CDN 会继续用旧文件，
+    # 结果是"新页面 + 旧脚本"，按钮点了没反应、新样式也不生效。
+    stamp = asset_stamp()
+    page = page.replace('href="styles.css"', 'href="styles.css?v=%s"' % stamp)
+    page = page.replace('src="app.js"', 'src="app.js?v=%s"' % stamp)
     content = (
         "// 由 tools/build_cloudflare.py 生成，请勿手改\n"
-        "// 页面模板，来自 page.html\n\n"
-        "export const PAGE_HTML = %s;\n" % json.dumps(page, ensure_ascii=False)
+        "// 页面模板，来自 page.html（静态资源已带版本号 %s）\n\n" % stamp
+        + "export const PAGE_HTML = %s;\n" % json.dumps(page, ensure_ascii=False)
     )
     path = os.path.join(CLOUDFLARE, "src", "page.js")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:

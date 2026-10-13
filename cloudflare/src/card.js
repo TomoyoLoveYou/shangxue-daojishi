@@ -481,11 +481,11 @@ function compose(plan, label, sizes, bg) {
 
 const pngCache = new Map();
 
-export async function renderCardPng(ms, sizes, bg) {
-  const target = nextTarget(ms);
+export async function renderCardPng(ms, sizes, bg, customTarget) {
+  const target = customTarget || nextTarget(ms);
   const countdown = splitCountdown(target, ms);
   const label = targetLabel(target);
-  const key = countdown.join('-') + '|' + label;
+  const key = `${target}|${countdown.join('-')}|${label}`;
   const cached = pngCache.get(key);
   if (cached) return cached;
   const plan = buildPlan(...countdown);

@@ -12,16 +12,18 @@ const OG_END = '<!-- og:end -->';
 
 const pad = (n) => String(n).padStart(2, '0');
 
-export function renderHtml(template, origin, ms) {
-  const target = nextTarget(ms);
+export function renderHtml(template, origin, ms, customTarget) {
+  const target = customTarget || nextTarget(ms);
   const countdown = splitCountdown(target, ms);
   const plan = buildPlan(...countdown);
 
   // 卡片文字：标题只放品牌，倒计时放在描述里（一句话说清，目标日期看图即可）
   const title = '上学倒计时';
   const desc = '距离上学' + planHead(plan);
-  // 带上倒计时状态做缓存键：微信按 URL 缓存图片，URL 变了才会重新抓
-  const image = `${origin}/og?v=${countdown[0]}d${pad(countdown[1])}h${pad(countdown[2])}`;
+  // 带上倒计时状态做缓存键：微信按 URL 缓存图片，URL 变了才会重新抓。
+  // 自定义目标必须一并传给卡片图，否则图和文字会不一致。
+  const targetParam = customTarget ? `&t=${target}` : '';
+  const image = `${origin}/og?v=${countdown[0]}d${pad(countdown[1])}h${pad(countdown[2])}${targetParam}`;
   const pageUrl = `${origin}/`;
 
   const block = [

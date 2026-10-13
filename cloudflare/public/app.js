@@ -167,6 +167,17 @@ elements.customForm.addEventListener('submit', (event) => {
   closeCustomDialog();
 });
 
+// 链接里带目标时间（?t=毫秒时间戳）时，按它恢复自定义目标，
+// 保证打开分享链接的人看到的倒计时和卡片一致。
+(function restoreTargetFromUrl() {
+  const raw = new URL(window.location.href).searchParams.get('t');
+  if (!raw) return;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) return;
+  targetTimestamp = value;
+  isCustomTarget = true;
+})();
+
 renderTargetDetails();
 renderCountdown();
 setInterval(renderCountdown, 250);
@@ -187,6 +198,8 @@ function buildShareUrl() {
   url.search = '';
   const random = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   url.searchParams.set('v', random);
+  // 自定义过目标就一并带上，服务端会按它算文案和卡片图
+  if (isCustomTarget) url.searchParams.set('t', String(targetTimestamp));
   return url.toString();
 }
 

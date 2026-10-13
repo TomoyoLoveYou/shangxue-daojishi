@@ -31,6 +31,19 @@ function withoutBody(response) {
   return new Response(null, { status: response.status, headers: response.headers });
 }
 
+/**
+ * 解析分享链接里的自定义目标（?t=毫秒时间戳）。
+ * 限定在「1 天前 ~ 2 年后」这个合理区间，避免被乱填导致生成奇怪卡片。
+ */
+function parseCustomTarget(raw) {
+  if (!raw) return null;
+  const value = Number(raw);
+  if (!Number.isFinite(value)) return null;
+  const now = Date.now();
+  if (value < now - 86400000 || value > now + 730 * 86400000) return null;
+  return Math.floor(value);
+}
+
 function b64ToBytes(b64) {
   const bin = atob(b64);
   const out = new Uint8Array(bin.length);
@@ -60,12 +73,13 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const headOnly = request.method === 'HEAD';
+    const customTarget = parseCustomTarget(url.searchParams.get('t'));
 
     if (url.pathname === '/og') {
       let response;
       try {
         const { sizes, bg } = await prepare();
-        const png = await renderCardPng(Date.now(), sizes, bg);
+        const png = await renderCardPng(Date.now(), sizes, bg, customTarget);
         response = new Response(png, {
           headers: {
             'Content-Type': 'image/png',
@@ -81,7 +95,7 @@ export default {
     }
 
     if (url.pathname === '/') {
-      const html = renderHtml(PAGE_HTML, url.origin, Date.now());
+      const html = renderHtml(PAGE_HTML, url.origin, Date.now(), customTarget);
       const response = new Response(html, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
