@@ -69,6 +69,12 @@
           <span class="button-arrow" aria-hidden="true">→</span>
         </button>
 
+        <button class="share-button" id="share-button" type="button">
+          <span class="button-icon" aria-hidden="true">↗</span>
+          <span>分享给好友</span>
+          <span class="button-arrow" aria-hidden="true">→</span>
+        </button>
+
         <footer class="footer-note">
           <span class="footer-line" aria-hidden="true"></span>
           <span>北京时间 · 精确到秒</span>
@@ -97,6 +103,16 @@
         <button class="save-button" type="submit">开始倒计时</button>
       </form>
     </dialog>
+
+    <!-- 微信内分享引导（点右上角 ··· 发送给朋友） -->
+    <div class="share-tip" id="share-tip">
+      <div class="share-tip-arrow" aria-hidden="true">↗</div>
+      <p class="share-tip-text">点右上角「···」<br />发送给朋友</p>
+      <p class="share-tip-hint">链接已更新，卡片会显示最新倒计时</p>
+    </div>
+
+    <!-- 普通浏览器里的轻提示 -->
+    <div class="share-toast" id="share-toast" role="status" aria-live="polite"></div>
 
     <script src="app.js"></script>
   </body>

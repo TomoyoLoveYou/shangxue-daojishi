@@ -170,3 +170,90 @@ elements.customForm.addEventListener('submit', (event) => {
 renderTargetDetails();
 renderCountdown();
 setInterval(renderCountdown, 250);
+
+// ---------------------------------------------------------------------------
+// 分享：链接带上随机参数，微信会当成新链接重新抓取，卡片就是当下的倒计时
+// ---------------------------------------------------------------------------
+
+const shareButton = document.querySelector('#share-button');
+const shareTip = document.querySelector('#share-tip');
+const shareToast = document.querySelector('#share-toast');
+
+let toastTimer = null;
+
+function buildShareUrl() {
+  const url = new URL(window.location.href);
+  url.hash = '';
+  url.search = '';
+  const random = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  url.searchParams.set('v', random);
+  return url.toString();
+}
+
+function showToast(message) {
+  if (!shareToast) return;
+  shareToast.textContent = message;
+  shareToast.classList.add('is-visible');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => shareToast.classList.remove('is-visible'), 2600);
+}
+
+function copyLink(url) {
+  const fallback = () => {
+    const input = document.createElement('input');
+    input.value = url;
+    input.setAttribute('readonly', 'readonly');
+    input.style.position = 'fixed';
+    input.style.top = '-100px';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch (err) {
+      ok = false;
+    }
+    document.body.removeChild(input);
+    showToast(ok ? '链接已复制，粘贴给好友即可' : '链接已更新，复制地址栏即可');
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(
+      () => showToast('链接已复制，粘贴给好友即可'),
+      fallback,
+    );
+    return;
+  }
+  fallback();
+}
+
+function handleShare() {
+  const url = buildShareUrl();
+  // 先把地址栏换成带随机参数的链接：微信里「复制链接」拿到的就是它
+  try {
+    window.history.replaceState(null, '', url);
+  } catch (err) {
+    /* 个别浏览器不允许改地址，忽略即可 */
+  }
+
+  if (/micromessenger/i.test(navigator.userAgent)) {
+    if (shareTip) shareTip.classList.add('is-visible');
+    return;
+  }
+
+  if (navigator.share) {
+    navigator.share({ title: '上学倒计时', url }).catch(() => copyLink(url));
+    return;
+  }
+
+  copyLink(url);
+}
+
+if (shareButton) {
+  shareButton.addEventListener('click', handleShare);
+}
+
+if (shareTip) {
+  shareTip.addEventListener('click', () => shareTip.classList.remove('is-visible'));
+}

@@ -403,6 +403,108 @@ h2 {
   transform: translateY(1px);
 }
 
+.share-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 54px;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.share-button:hover,
+.share-button:focus-visible {
+  background: #285343;
+  outline: none;
+}
+
+.share-button:active {
+  transform: translateY(1px);
+}
+
+.share-button .button-icon {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.share-button .button-arrow {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* 微信内分享引导 */
+.share-tip {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 26px 0;
+  background: rgba(20, 44, 34, 0.76);
+  color: #fff;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.share-tip.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.share-tip-arrow {
+  align-self: flex-end;
+  font-size: 38px;
+  line-height: 1;
+}
+
+.share-tip-text {
+  margin: 10px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.share-tip-hint {
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 12px;
+}
+
+/* 普通浏览器里的轻提示 */
+.share-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 44px;
+  z-index: 40;
+  max-width: calc(100vw - 48px);
+  padding: 11px 18px;
+  border-radius: 999px;
+  background: rgba(24, 55, 45, 0.92);
+  color: #fff;
+  font-size: 13px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 8px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.share-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 @media (max-width: 480px) {
   .app-shell {
     padding: 0;
