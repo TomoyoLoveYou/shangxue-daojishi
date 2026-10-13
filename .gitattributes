@@ -1,0 +1,5 @@
+# 统一使用 LF 行尾：本项目同时要在 Windows 开发、在 Linux（Cloudflare 构建）部署
+* text=auto eol=lf
+
+# 二进制文件
+*.png binary
