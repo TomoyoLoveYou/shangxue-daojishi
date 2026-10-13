@@ -66,8 +66,8 @@ def render_html(host: str) -> str:
     meta = ogcard.render_meta()
     image = "https://%s/og.png?v=%s" % (host, meta["cache_key"])
     page_url = "https://%s/" % host
-    title = "上学倒计时 · %s" % meta["head"]
-    desc = "目标 %s · 北京时间，点开查看秒级倒计时" % meta["label"]
+    title = "上学倒计时"
+    desc = "距离上学%s" % meta["head"]
 
     block = "\n".join([
         OG_BEGIN,

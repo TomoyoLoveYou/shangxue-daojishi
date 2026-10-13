@@ -154,8 +154,8 @@ def render_html(origin, now):
     days, hours, minutes, seconds = split_countdown(target, now)
     plan = build_plan(days, hours, minutes, seconds)
     label = target_label(target)
-    title = "上学倒计时 · " + plan_head(plan)
-    desc = "目标 %s · 北京时间，点开查看秒级倒计时" % label
+    title = "上学倒计时"
+    desc = "距离上学" + plan_head(plan)
     image = "%s/og?v=%dd%02dh%02d" % (origin, days, hours, minutes)
     page_url = origin + "/"
 
