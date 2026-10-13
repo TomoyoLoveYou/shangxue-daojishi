@@ -1,0 +1,6 @@
+{
+  "name": "shangxue-daojishi",
+  "private": true,
+  "type": "module",
+  "description": "上学倒计时的 Cloudflare Worker 版（页面 + 微信分享卡片图）"
+}

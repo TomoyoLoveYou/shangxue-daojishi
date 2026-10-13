@@ -1,0 +1,10 @@
+name = "shangxue-daojishi"
+main = "src/worker.js"
+compatibility_date = "2025-01-01"
+
+# 静态资源目录：请求会优先匹配这里的文件，
+# 匹配不到才交给 src/worker.js（/ 与 /og 都是这样被接管的）。
+# 注意：这里不能放 index.html。
+[assets]
+directory = "./public"
+binding = "ASSETS"
