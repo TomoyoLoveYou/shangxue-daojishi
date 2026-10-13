@@ -10,9 +10,14 @@ from http.server import BaseHTTPRequestHandler
 
 PAGE_HTML = '<!doctype html>\n<html lang="zh-CN">\n  <head>\n    <meta charset="UTF-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />\n    <meta name="theme-color" content="#f5f8f6" />\n    <title>上学倒计时</title>\n    <!-- og:begin -->\n    <meta name="description" content="简洁的上学倒计时，显示距离北京时间周日 18:35 的剩余时间。" />\n    <meta property="og:type" content="website" />\n    <meta property="og:site_name" content="上学倒计时" />\n    <meta property="og:title" content="上学倒计时" />\n    <meta property="og:description" content="目标 10月18日 周日 18:35 · 北京时间，点开查看秒级倒计时" />\n    <meta property="og:image" content="https://school-countdown.app.workbuddy.host/assets/share-cover.png" />\n    <meta property="og:image:type" content="image/png" />\n    <meta property="og:image:width" content="900" />\n    <meta property="og:image:height" content="900" />\n    <meta property="og:url" content="https://school-countdown.app.workbuddy.host/" />\n    <meta name="twitter:card" content="summary" />\n    <!-- og:end -->\n    <link rel="stylesheet" href="styles.css" />\n  </head>\n  <body>\n    <main class="app-shell">\n      <section class="timer-page" aria-labelledby="page-title">\n        <header class="topbar">\n          <div class="brand-mark" aria-hidden="true">计</div>\n          <div class="brand-copy">\n            <p class="eyebrow">TIME TO GO</p>\n            <h1 id="page-title">上学倒计时</h1>\n          </div>\n          <button class="icon-button" id="reset-button" type="button" aria-label="恢复默认目标" title="恢复默认目标">\n            <span aria-hidden="true">↺</span>\n          </button>\n        </header>\n\n        <section class="hero-panel" aria-live="polite">\n          <div class="status-row">\n            <span class="status-dot" aria-hidden="true"></span>\n            <span id="status-label">距离下个周日</span>\n          </div>\n          <div class="countdown" id="countdown" aria-label="剩余时间">\n            <span id="days" class="countdown-value">00</span>\n            <span class="countdown-unit">天</span>\n            <span class="countdown-value" id="hours">00</span>\n            <span class="countdown-unit">时</span>\n            <span class="countdown-value" id="minutes">00</span>\n            <span class="countdown-unit">分</span>\n            <span class="countdown-value" id="seconds">00</span>\n            <span class="countdown-unit">秒</span>\n          </div>\n          <p class="target-caption" id="target-caption">目标：周日下午 6:35</p>\n        </section>\n\n        <section class="info-grid" aria-label="目标信息">\n          <article class="info-item">\n            <span class="info-label">目标日期</span>\n            <strong id="target-date">--月--日 周日</strong>\n          </article>\n          <article class="info-item">\n            <span class="info-label">目标时间</span>\n            <strong id="target-time">18:35</strong>\n          </article>\n        </section>\n\n        <button class="customize-button" id="customize-button" type="button">\n          <span class="button-icon" aria-hidden="true">＋</span>\n          <span>自定义目标时间</span>\n          <span class="button-arrow" aria-hidden="true">→</span>\n        </button>\n\n        <footer class="footer-note">\n          <span class="footer-line" aria-hidden="true"></span>\n          <span>北京时间 · 精确到秒</span>\n          <span class="footer-line" aria-hidden="true"></span>\n        </footer>\n      </section>\n    </main>\n\n    <dialog class="custom-dialog" id="custom-dialog" aria-labelledby="dialog-title">\n      <form class="dialog-card" id="custom-form" method="dialog">\n        <div class="dialog-handle" aria-hidden="true"></div>\n        <div class="dialog-heading">\n          <div>\n            <p class="eyebrow">SET YOUR MOMENT</p>\n            <h2 id="dialog-title">自定义目标时间</h2>\n          </div>\n          <button class="close-button" id="close-dialog" type="button" aria-label="关闭">×</button>\n        </div>\n        <p class="dialog-description">选择一个具体日期和时间，倒计时会立即更新。</p>\n        <div class="form-fields">\n          <label class="field-label" for="custom-date">日期</label>\n          <input class="field-input" id="custom-date" name="custom-date" type="date" required />\n          <label class="field-label" for="custom-time">时间</label>\n          <input class="field-input" id="custom-time" name="custom-time" type="time" required />\n        </div>\n        <button class="save-button" type="submit">开始倒计时</button>\n      </form>\n    </dialog>\n\n    <script src="app.js"></script>\n  </body>\n</html>\n'
 
-# 若卡片图地址不对（反向代理把 Host 改写成了内部域名），可在 EdgeOne 项目设置里
-# 添加环境变量 EO_PUBLIC_ORIGIN=https://你的域名，即可强制指定对外地址。
-PUBLIC_ORIGIN = os.environ.get("EO_PUBLIC_ORIGIN", "").strip().rstrip("/")
+# 卡片图（og:image）必须是外网可达的绝对地址，而云函数看到的 Host 往往是内部域名
+# （实测平台会给出 pages-xx.pages-scf-gz-pro.qcloudteo.com 这类地址）。因此：
+#   1) 优先用下面的 PUBLIC_ORIGIN_DEFAULT / 环境变量 EO_PUBLIC_ORIGIN（最可靠）
+#   2) 否则在请求头里挑平台公开域名（*.edgeone.app|.cool|.run）或非内部域名
+#   3) 都拿不准时退化为相对地址 /og，交给抓取方按页面地址解析
+PUBLIC_ORIGIN_DEFAULT = ""  # 绑定自定义域名后填这里，例如 "https://xxx.example.com"
+
+PUBLIC_ORIGIN = (os.environ.get("EO_PUBLIC_ORIGIN") or PUBLIC_ORIGIN_DEFAULT).strip().rstrip("/")
 
 BEIJING = timezone(timedelta(hours=8))
 TARGET_HOUR = 18
@@ -20,7 +25,10 @@ TARGET_MINUTE = 35
 WEEKDAY_CN = ("一", "二", "三", "四", "五", "六", "日")
 OG_BEGIN = "<!-- og:begin -->"
 OG_END = "<!-- og:end -->"
-INTERNAL_HINTS = ("internal", "localhost", "127.0.0.1", ".local", "sandbox", "cloudstudio", "e2b.")
+PUBLIC_HOST_SUFFIXES = (".edgeone.app", ".edgeone.cool", ".edgeone.run")
+INTERNAL_HINTS = ("internal", "localhost", "127.0.0.1", ".local", "sandbox",
+                  "cloudstudio", "e2b.", "qcloudteo", "tencentcloudapi",
+                  "myqcloud", "qcloud.com")
 
 
 def next_target(now):
@@ -63,19 +71,22 @@ def pick_origin(headers):
     if PUBLIC_ORIGIN:
         return PUBLIC_ORIGIN
     proto = (headers.get("X-Forwarded-Proto") or "https").split(",")[0].strip()
-    for key in ("X-Forwarded-Host", "Host"):
+    candidates = []
+    for key in ("X-Forwarded-Host", "Host", "X-Original-Host", "X-Forwarded-Server"):
         raw = headers.get(key)
         if not raw:
             continue
         for host in raw.split(","):
             host = host.strip()
-            if not host:
-                continue
-            if any(hint in host.lower() for hint in INTERNAL_HINTS):
-                continue
+            if host and host not in candidates:
+                candidates.append(host)
+    for host in candidates:  # 平台公开域名优先
+        if host.lower().endswith(PUBLIC_HOST_SUFFIXES):
             return "%s://%s" % (proto, host)
-    raw = headers.get("Host") or headers.get("X-Forwarded-Host") or ""
-    return "%s://%s" % (proto, raw.split(",")[0].strip()) if raw else ""
+    for host in candidates:  # 其次是非内部的（多半是自定义域名）
+        if not any(hint in host.lower() for hint in INTERNAL_HINTS):
+            return "%s://%s" % (proto, host)
+    return ""  # 拿不准就退化为相对地址
 
 
 def render_html(origin, now):

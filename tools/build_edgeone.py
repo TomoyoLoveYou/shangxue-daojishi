@@ -70,9 +70,14 @@ from http.server import BaseHTTPRequestHandler
 
 PAGE_HTML = @PAGE_HTML@
 
-# 若卡片图地址不对（反向代理把 Host 改写成了内部域名），可在 EdgeOne 项目设置里
-# 添加环境变量 EO_PUBLIC_ORIGIN=https://你的域名，即可强制指定对外地址。
-PUBLIC_ORIGIN = os.environ.get("EO_PUBLIC_ORIGIN", "").strip().rstrip("/")
+# 卡片图（og:image）必须是外网可达的绝对地址，而云函数看到的 Host 往往是内部域名
+# （实测平台会给出 pages-xx.pages-scf-gz-pro.qcloudteo.com 这类地址）。因此：
+#   1) 优先用下面的 PUBLIC_ORIGIN_DEFAULT / 环境变量 EO_PUBLIC_ORIGIN（最可靠）
+#   2) 否则在请求头里挑平台公开域名（*.edgeone.app|.cool|.run）或非内部域名
+#   3) 都拿不准时退化为相对地址 /og，交给抓取方按页面地址解析
+PUBLIC_ORIGIN_DEFAULT = ""  # 绑定自定义域名后填这里，例如 "https://xxx.example.com"
+
+PUBLIC_ORIGIN = (os.environ.get("EO_PUBLIC_ORIGIN") or PUBLIC_ORIGIN_DEFAULT).strip().rstrip("/")
 
 BEIJING = timezone(timedelta(hours=8))
 TARGET_HOUR = 18
@@ -80,7 +85,10 @@ TARGET_MINUTE = 35
 WEEKDAY_CN = ("一", "二", "三", "四", "五", "六", "日")
 OG_BEGIN = "<!-- og:begin -->"
 OG_END = "<!-- og:end -->"
-INTERNAL_HINTS = ("internal", "localhost", "127.0.0.1", ".local", "sandbox", "cloudstudio", "e2b.")
+PUBLIC_HOST_SUFFIXES = (".edgeone.app", ".edgeone.cool", ".edgeone.run")
+INTERNAL_HINTS = ("internal", "localhost", "127.0.0.1", ".local", "sandbox",
+                  "cloudstudio", "e2b.", "qcloudteo", "tencentcloudapi",
+                  "myqcloud", "qcloud.com")
 
 
 def next_target(now):
@@ -123,19 +131,22 @@ def pick_origin(headers):
     if PUBLIC_ORIGIN:
         return PUBLIC_ORIGIN
     proto = (headers.get("X-Forwarded-Proto") or "https").split(",")[0].strip()
-    for key in ("X-Forwarded-Host", "Host"):
+    candidates = []
+    for key in ("X-Forwarded-Host", "Host", "X-Original-Host", "X-Forwarded-Server"):
         raw = headers.get(key)
         if not raw:
             continue
         for host in raw.split(","):
             host = host.strip()
-            if not host:
-                continue
-            if any(hint in host.lower() for hint in INTERNAL_HINTS):
-                continue
+            if host and host not in candidates:
+                candidates.append(host)
+    for host in candidates:  # 平台公开域名优先
+        if host.lower().endswith(PUBLIC_HOST_SUFFIXES):
             return "%s://%s" % (proto, host)
-    raw = headers.get("Host") or headers.get("X-Forwarded-Host") or ""
-    return "%s://%s" % (proto, raw.split(",")[0].strip()) if raw else ""
+    for host in candidates:  # 其次是非内部的（多半是自定义域名）
+        if not any(hint in host.lower() for hint in INTERNAL_HINTS):
+            return "%s://%s" % (proto, host)
+    return ""  # 拿不准就退化为相对地址
 
 
 def render_html(origin, now):
