@@ -1,4 +1,4 @@
-"""诊断探针（临时）：Node.js 云函数返回二进制，看字节是否被破坏。"""
+// 诊断探针（临时）：Node.js 云函数返回二进制，看字节是否被破坏。
 
 export default function onRequest() {
   const payload = new Uint8Array(256);
