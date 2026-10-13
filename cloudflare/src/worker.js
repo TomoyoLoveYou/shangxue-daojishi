@@ -1,16 +1,17 @@
 /**
- * Cloudflare Worker 入口。
+ * Worker 入口（Workers 与 Pages 通用）。
  *
  *   GET /        -> 按当前倒计时注入 og:* 元信息后的页面
  *   GET /og      -> 实时渲染的分享卡片图（900x900 PNG）
- *   其他路径      -> public/ 里的静态资源（styles.css / app.js / assets/*）
+ *   其他路径      -> 内联的静态资源（styles.css / app.js / 兜底封面图）
  *
- * 注意：public/ 里不要放 index.html —— 静态资源优先于 Worker，
- * 否则 / 会被静态文件接管，动态的卡片信息就失效了。
+ * 静态资源是内联在 Worker 里的，不依赖平台的静态资源行为，
+ * 所以不用担心"静态文件优先于 Worker"把 / 抢走的问题。
  */
 
 import { GLYPHS_B64 } from './glyphs.js';
 import { PAGE_HTML } from './page.js';
+import { STATIC_ASSETS } from './static.js';
 import { ensureGlyphs, ensureBackground, renderCardPng } from './card.js';
 import { renderHtml } from './meta.js';
 
@@ -28,6 +29,31 @@ function prepare() {
 
 function withoutBody(response) {
   return new Response(null, { status: response.status, headers: response.headers });
+}
+
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+const assetCache = new Map();
+
+function localAsset(pathname) {
+  const entry = STATIC_ASSETS[pathname];
+  if (!entry) return null;
+  let body = assetCache.get(pathname);
+  if (body === undefined) {
+    body = entry.text !== undefined ? entry.text : b64ToBytes(entry.base64);
+    assetCache.set(pathname, body);
+  }
+  return new Response(body, {
+    headers: {
+      'Content-Type': entry.type,
+      'Cache-Control': 'public, max-age=3600',
+    },
+  });
 }
 
 export default {
@@ -64,6 +90,9 @@ export default {
       });
       return headOnly ? withoutBody(response) : response;
     }
+
+    const local = localAsset(url.pathname);
+    if (local) return headOnly ? withoutBody(local) : local;
 
     if (env && env.ASSETS) return env.ASSETS.fetch(request);
     return new Response('Not Found', { status: 404 });
